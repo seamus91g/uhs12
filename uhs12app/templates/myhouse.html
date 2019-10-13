@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<h1>{{ current_user.username }}</h1>
+<p>Welcome to my house</p>
+
+{% if invites %}
+
+{% for invUser, invForm in invites.items() %}
+
+<div class="card">
+
+    <div class="card-body">
+        <h5 class="card-title">{{ invUser.username }} has requested to join your house!</h5>
+
+        <!-- TODO should this really be a form? Can not just have buttons by themselves? -->
+        <form method="POST" action="">
+            {{ invForm.hidden_tag() }}
+
+            <fieldset class="form-group">
+            </fieldset>
+
+            <div class="form-group">
+                {{ invForm.submitAccept(class="btn btn-primary")}}
+                {{ invForm.submitDecline(class="btn btn-danger")}}
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endfor %}
+
+{% endif %}
+
+{% endblock content %}
