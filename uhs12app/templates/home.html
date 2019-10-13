@@ -17,7 +17,7 @@
         <div>
             <small>Last completed by {{ task.lastCompletedPerson() }} on {{ task.lastCompletedDate() }}</small>
         </div>
-        <a href="#" class="card-link">Complete</a>
+        <a href="{{ url_for('taskcomplete', taskid=task.id) }}" class="card-link">Complete</a>
     </div>
 </div>
 

@@ -8,7 +8,7 @@ from uhs12app.models import User, House, Invite, Task, TaskLog
 
 
 @app.route("/")
-@app.route("/home")
+@app.route("/home", methods=["GET", "POST"])
 @login_required
 def home():
     '''
@@ -18,6 +18,38 @@ def home():
         return redirect(url_for("whathouse"))
     allTasks = Task.query.all()
     return render_template('home.html', tasks=allTasks)
+
+
+@app.route("/taskcomplete", methods=["GET", "POST"])
+@login_required
+def taskcomplete():
+    taskCompleted = Task.query.filter_by(id=int(request.args['taskid'])).first()
+    # TODO if last completed date is with cool off window, value is cool off value 
+    ptsVal=taskCompleted.value
+    taskItem = TaskLog(houseId=current_user.houseId, taskId=taskCompleted.id, idUser=current_user.id, value=ptsVal)
+    db.session.add(taskItem)
+    db.session.commit()
+    flash(f"Great work! You completed task '{taskCompleted.name}'", "success")
+    return redirect(url_for("home"))
+
+
+@app.route("/tasklog")
+@login_required
+def tasklog():
+    allTasksCompleted = TaskLog.query.all()
+    task1 = allTasksCompleted[0]
+    return render_template("tasklog.html", tasklog=allTasksCompleted, currUser=current_user)
+
+
+@app.route("/taskdelete", methods=["GET", "POST"])
+@login_required
+def taskdelete():
+    taskLogItem = TaskLog.query.filter_by(id=int(request.args['taskid'])).first()
+    nameDeleted = taskLogItem.task.name
+    db.session.delete(taskLogItem)
+    db.session.commit()
+    flash(f"You deleted task '{nameDeleted}'", "info")
+    return redirect(url_for("home"))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -60,7 +92,6 @@ def logout():
     return redirect(url_for("home"))
 
 
-@app.route("/myhouse")
 @app.route("/myhouse", methods=["GET", "POST"])
 @login_required
 def myhouse():
@@ -86,8 +117,9 @@ def myhouse():
                 pass
             db.session.commit()
             return redirect(url_for("myhouse"))
-
-    return render_template('myhouse.html', invites=invitesWaiting)
+    # TODO make this an OrderedDict and sort by person with most points 
+    ptsUsers = TaskLog.pointsAllUsers(db.session)
+    return render_template('myhouse.html', invites=invitesWaiting, points=ptsUsers)
 
 
 @app.route("/whathouse")
@@ -104,12 +136,14 @@ def whathouse():
         house_name = House.query.filter_by(id=open_invite.houseId).first().name
     return render_template('whathouse.html', pending_invite=house_name)
 
+
 # TODO make this a decorator 
 def checkWaitingOnInvite(userWaiting):
     # TODO if filter by isResponded then can drop the loop
     for sent_invite in Invite.query.filter_by(idUserInvited=userWaiting.id).all():
         if not sent_invite.isResponded:
             return sent_invite
+
 
 @app.route("/create", methods=["GET", "POST"])
 @login_required

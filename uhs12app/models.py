@@ -72,9 +72,25 @@ class TaskLog(db.Model):
     id = Column(Integer, primary_key=True)
     houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
     taskId = Column(Integer, ForeignKey("task.id"), nullable=False)
+    task = relationship("Task", backref="taskCompleted")
     idUser = Column(Integer, ForeignKey("user.id"), nullable=False)
+    user = relationship("User", backref="taskOwner")
     dateCreated = Column(DateTime, nullable=False, default=datetime.utcnow)
+    value = Column(Integer, nullable=False)
 
+    @staticmethod
+    def pointsByUser(session, user):
+        tasksByuser = session.query(TaskLog).filter_by(idUser=user.id).all()
+        totalPts = sum([task.value for task in tasksByuser])
+        return totalPts
+    
+    @classmethod
+    def pointsAllUsers(cls, session):
+        allUsers = session.query(User).all()
+        ptsByUser = {}
+        for user in allUsers:
+            ptsByUser[user] = cls.pointsByUser(session, user)
+        return ptsByUser
 
 #  Db schema
 # # # # # # # # 

@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+{% for taskComplete in tasklog %}
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ taskComplete.task.name }}</h5>
+        <h6 class="card-subtitle mb-2 text-muted">Completed by {{ taskComplete.user.username }} on {{ taskComplete.dateCreated.strftime("%Y-%m-%d") }} </h6>
+        <!-- <p class="card-text">{{ taskComplete.description }}</p> -->
+        {% if currUser.id == taskComplete.user.id %}
+        <a href="{{ url_for('taskdelete', taskid=taskComplete.id) }}" class="card-link">Delete</a>
+        {% endif %}
+        <!-- <input type="submit" class="btn btn-primary" name="submit_button" value="complete"> -->
+        <!-- <button type="submit" class="btn btn-primary">Complete</button> -->
+    </div>
+</div>
+
+{% endfor %}
+
+
+{% endblock content %}
+

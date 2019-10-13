@@ -3,9 +3,7 @@
 {% block content %}
 
 <h1>{{ current_user.username }}</h1>
-<p>Welcome to my house</p>
-
-{% if invites %}
+<p>See info on the members of this house</p>
 
 {% for invUser, invForm in invites.items() %}
 
@@ -32,6 +30,17 @@
 
 {% endfor %}
 
-{% endif %}
+{% for person, pts in points.items() %}
+
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ person.username }}</h5>
+        <h6 class="card-subtitle mb-2 text-muted">{{ pts }} points</h6>
+    </div>
+</div>
+        
+
+{% endfor %}
 
 {% endblock content %}
