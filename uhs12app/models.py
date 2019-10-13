@@ -45,16 +45,46 @@ class Invite(db.Model):
     idUserInvited = Column(Integer, ForeignKey("user.id"), nullable=False)
     isResponded = Column(Boolean, nullable=False, default=False)
 
+class Task(db.Model):
+    id = Column(Integer, primary_key=True)
+    houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
+    name = Column(String(20), nullable=False)
+    description = Column(String(140))
+    value = Column(Integer, nullable=False)
+    coolOffPeriod = Column(Integer, nullable=False, default=0)
+    coolOffValue = Column(Integer, nullable=False, default=0)
+
+    # Function to see if cool off is active 
+    def isCooloffActive(self):
+        # TODO implement
+        return False
+
+    def lastCompletedDate(self):
+        # TODO implement
+        return "2019-10-15"
+
+    def lastCompletedPerson(self):
+        # TODO implement
+        return "Bill"
+
+
+class TaskLog(db.Model):
+    id = Column(Integer, primary_key=True)
+    houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
+    taskId = Column(Integer, ForeignKey("task.id"), nullable=False)
+    idUser = Column(Integer, ForeignKey("user.id"), nullable=False)
+    dateCreated = Column(DateTime, nullable=False, default=datetime.utcnow)
+
 
 #  Db schema
 # # # # # # # # 
 #   User                id hid^     username        mail                password    dateCreated         
 #   House               id          dateCreated     adminUserId         <User>      <ShamePost>
 #   WaitingInvites      id hid      idUserInvited   responded
-# 
+#   Task                id hid      name            description         value       coolDownTime        coolDownValue
 #   TaskLog             id hid      taskId          userId              date        
+# 
 #   ShamePost           id hid      userCreated     photo               comment     disapprovalCount    date
-#   PossibleTasks       id hid      name            description         value       coolDownTime        coolDownValue
 ##   ShameComments      id hid      shameLogId      user                comment     date
 
 

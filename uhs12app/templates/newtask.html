@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="content-section">
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+
+
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Create a new task</legend>
+
+            <div class="form-group">
+                {{ form.name.label(class="form-control-label")}}
+                {% if form.name.errors %}
+                {{ form.name(class="form-control form-control-lg is-invalid")}}
+                <div class="invalid-feedback">
+                    {% for error in form.name.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.name(class="form-control form-control-lg")}}
+                {% endif %}
+
+            </div>
+            <div class="form-group">
+                {{ form.description.label(class="form-control-label")}}
+                {% if form.description.errors %}
+                {{ form.description(class="form-control form-control-lg is-invalid")}}
+                <div class="invalid-feedback">
+                    {% for error in form.description.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.description(class="form-control form-control-lg")}}
+
+                {% endif %}
+
+            </div>
+<!-- name = StringField('Task name',
+                validators=[DataRequired(), Length(min=2, max=20)])
+description = StringField('Task instructions',
+            validators=[Length(min=0, max=140)])
+value = IntegerField('Number of points for completing the task', validators=[DataRequired()])
+coolOffPeriod = IntegerField('Number of cool off days for the task. The task is worth less points during this time', validators=[DataRequired()])
+coolOffValue = IntegerField('Number of points for completing the task', validators=[DataRequired()]) -->
+
+            <div class="form-group">
+                {{ form.value.label(class="form-control-label")}}
+                {% if form.value.errors %}
+                {{ form.value(class="form-control form-control-lg is-invalid")}}
+                <div class="invalid-feedback">
+                    {% for error in form.value.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.value(class="form-control form-control-lg")}}
+
+                {% endif %}
+
+            </div>
+            <div class="form-group">
+                {{ form.coolOffPeriod.label(class="form-control-label")}}
+                {% if form.coolOffPeriod.errors %}
+                {{ form.coolOffPeriod(class="form-control form-control-lg is-invalid")}}
+                <div class="invalid-feedback">
+                    {% for error in form.coolOffPeriod.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.coolOffPeriod(class="form-control form-control-lg")}}
+
+                {% endif %}
+
+            </div>
+            <div class="form-group">
+                {{ form.coolOffValue.label(class="form-control-label")}}
+                {% if form.coolOffValue.errors %}
+                {{ form.coolOffValue(class="form-control form-control-lg is-invalid")}}
+                <div class="invalid-feedback">
+                    {% for error in form.coolOffValue.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.coolOffValue(class="form-control form-control-lg")}}
+
+                {% endif %}
+
+            </div>
+
+        </fieldset>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-outline-info")}}
+
+        </div>
+
+    </form>
+
+</div>
+
+
+{% endblock content %}

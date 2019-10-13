@@ -3,7 +3,34 @@
 {% block content %}
 
 
+{% for task in tasks %}
 
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ task.name }}</h5>
+        {% if task.isCooloffActive() %}
+        <h6 class="card-subtitle mb-2 text-muted">Worth {{ task.coolOffValue }} points. Cool off is active</h6>
+        {% else %}
+        <h6 class="card-subtitle mb-2 text-muted">Worth {{ task.value }} points</h6>
+        {% endif %}
+        <p class="card-text">{{ task.description }}</p>
+        <div>
+            <small>Last completed by {{ task.lastCompletedPerson() }} on {{ task.lastCompletedDate() }}</small>
+        </div>
+        <a href="#" class="card-link">Complete</a>
+    </div>
+</div>
+
+{% endfor %}
+
+
+<div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Create a new task</h5>
+            <a href="{{ url_for('newtask') }}" class="card-link">New Task</a>
+        </div>
+    </div>
+    
 
 {% endblock content %}
 

@@ -3,11 +3,9 @@ from datetime import datetime
 from flask import render_template, url_for, flash, redirect, request
 from flask_login import login_user, current_user, logout_user, login_required
 from uhs12app import app, db, bcrypt
-from uhs12app.forms import RegistrationForm, LoginForm, NewHouseForm, JoinHouseForm, ReplyInviteForm
-from uhs12app.models import User, House, Invite
+from uhs12app.forms import RegistrationForm, LoginForm, NewHouseForm, JoinHouseForm, ReplyInviteForm, NewTaskForm
+from uhs12app.models import User, House, Invite, Task, TaskLog
 
-
-somethingyadayada = { "hmm" : "okay", "Really?": "sure .."}
 
 @app.route("/")
 @app.route("/home")
@@ -18,7 +16,8 @@ def home():
     '''
     if not current_user.houseId:
         return redirect(url_for("whathouse"))
-    return render_template('home.html', somestuff=somethingyadayada)
+    allTasks = Task.query.all()
+    return render_template('home.html', tasks=allTasks)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -157,3 +156,22 @@ def join():
         flash(f"Requested to join {join_form.name.data}!", "success")
         return redirect(url_for("whathouse"))
     return render_template('join.html', form=join_form)
+
+
+@app.route("/newtask", methods=["GET", "POST"])
+@login_required
+def newtask():
+    if not current_user.houseId:
+        return redirect(url_for("whathouse"))
+    taskForm = NewTaskForm()
+    if taskForm.validate_on_submit():
+        task = Task(houseId=current_user.houseId, name=taskForm.name.data, 
+                    description=taskForm.description.data, value=taskForm.value.data, 
+                    coolOffPeriod=taskForm.coolOffPeriod.data, coolOffValue=taskForm.coolOffValue.data
+                )
+        db.session.add(task)
+        db.session.commit()
+        flash(f"Task '{taskForm.name.data}' created!", "success")
+        return redirect(url_for("home"))
+
+    return render_template('newtask.html', form=taskForm)
