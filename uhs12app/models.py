@@ -1,6 +1,6 @@
-'''
+"""
 Models for uhs12
-'''
+"""
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
@@ -14,13 +14,14 @@ def load_user(user_id):
 
 
 class User(db.Model, UserMixin):
-    '''
+    """
     User login model
-    '''
+    """
+
     id = Column(Integer, primary_key=True)
     # User may not yet have joined a house, thus nullable is true
     houseId = Column(Integer, ForeignKey("house.id"), nullable=True)
-    # Username should actually just be unique per house TODO: how to enforce this? 
+    # Username should actually just be unique per house TODO: how to enforce this?
     username = Column(String(20), unique=True, nullable=False)
     email = Column(String(120), unique=True, nullable=False)
     password = Column(String(60), nullable=False)
@@ -28,6 +29,7 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
+
 
 class House(db.Model):
     id = Column(Integer, primary_key=True)
@@ -45,6 +47,7 @@ class Invite(db.Model):
     idUserInvited = Column(Integer, ForeignKey("user.id"), nullable=False)
     isResponded = Column(Boolean, nullable=False, default=False)
 
+
 class Task(db.Model):
     id = Column(Integer, primary_key=True)
     houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
@@ -54,7 +57,7 @@ class Task(db.Model):
     coolOffPeriod = Column(Integer, nullable=False, default=0)
     coolOffValue = Column(Integer, nullable=False, default=0)
 
-    # Function to see if cool off is active 
+    # Function to see if cool off is active
     def isCooloffActive(self):
         # TODO implement
         return False
@@ -83,7 +86,7 @@ class TaskLog(db.Model):
         tasksByuser = session.query(TaskLog).filter_by(idUser=user.id).all()
         totalPts = sum([task.value for task in tasksByuser])
         return totalPts
-    
+
     @classmethod
     def pointsAllUsers(cls, session):
         allUsers = session.query(User).all()
@@ -92,24 +95,25 @@ class TaskLog(db.Model):
             ptsByUser[user] = cls.pointsByUser(session, user)
         return ptsByUser
 
+
 #  Db schema
-# # # # # # # # 
-#   User                id hid^     username        mail                password    dateCreated         
+# # # # # # # #
+#   User                id hid^     username        mail                password    dateCreated
 #   House               id          dateCreated     adminUserId         <User>      <ShamePost>
 #   WaitingInvites      id hid      idUserInvited   responded
 #   Task                id hid      name            description         value       coolDownTime        coolDownValue
-#   TaskLog             id hid      taskId          userId              date        
-# 
+#   TaskLog             id hid      taskId          userId              date
+#
 #   ShamePost           id hid      userCreated     photo               comment     disapprovalCount    date
 ##   ShameComments      id hid      shameLogId      user                comment     date
 
 
 #### Notes
 # <blah> means a relationship
-# id = primary key 
-# nid = non primary key id 
+# id = primary key
+# nid = non primary key id
 # disapprovalCount is a bunch of taps, like claps on medium.com
-# Two hash at start means it's for future, not now 
+# Two hash at start means it's for future, not now
 
 # Details in task tab
 # Normal
@@ -135,6 +139,4 @@ class ShamePost(db.Model):
     comment = Column(String(140))
     # TODO: this should be some kind of date format, not String
     disapprovalCount = Column(Integer, nullable=False, default=0)
-    datePosted  = Column(String(20))
-
-
+    datePosted = Column(String(20))
