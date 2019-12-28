@@ -1,4 +1,7 @@
+import os
+import secrets
 from datetime import datetime
+from PIL import Image
 from flask import render_template, url_for, flash, redirect, request
 from flask_login import login_user, current_user, logout_user, login_required
 from uhs12app import app, db, bcrypt
@@ -9,8 +12,9 @@ from uhs12app.forms import (
     JoinHouseForm,
     ReplyInviteForm,
     NewTaskForm,
+    NewShamePostForm,
 )
-from uhs12app.models import User, House, Invite, Task, TaskLog
+from uhs12app.models import User, House, Invite, Task, TaskLog, ShamePost
 
 
 @app.route("/")
@@ -22,7 +26,7 @@ def home():
     """
     if not current_user.houseId:
         return redirect(url_for("whathouse"))
-    allTasks = Task.query.all()
+    allTasks = Task.query.filter_by(houseId=current_user.houseId)
     return render_template("home.html", tasks=allTasks)
 
 
@@ -31,13 +35,13 @@ def home():
 def taskcomplete():
     taskCompleted = Task.query.filter_by(id=int(request.args["taskid"])).first()
     # TODO if last completed date is with cool off window, value is cool off value
-    ptsVal = taskCompleted.value
     taskItem = TaskLog(
         houseId=current_user.houseId,
         taskId=taskCompleted.id,
         idUser=current_user.id,
-        value=ptsVal,
+        value=taskCompleted.currentValue(),
     )
+    taskCompleted.updateCompleted(current_user)
     db.session.add(taskItem)
     db.session.commit()
     flash(f"Great work! You completed task '{taskCompleted.name}'", "success")
@@ -47,8 +51,7 @@ def taskcomplete():
 @app.route("/tasklog")
 @login_required
 def tasklog():
-    allTasksCompleted = TaskLog.query.all()
-    # task1 = allTasksCompleted[0]      # TODO what if no tasks, index error 
+    allTasksCompleted = TaskLog.query.filter_by(houseId=current_user.houseId)
     return render_template(
         "tasklog.html", tasklog=allTasksCompleted, currUser=current_user
     )
@@ -82,6 +85,47 @@ def login():
         else:
             flash("Bad login! Check your email and password", "danger")
     return render_template("login.html", form=login_form)
+
+
+def save_picture(form_picture, sub_dir="wos_pics", output_size=(512, 512)):
+    """
+    Save a picture to the file system. 
+    Assign random name in case users upload two pics with same name. 
+    Picture will be resized to specified dimensions before being saved. 
+    """
+    # Keep the extension but randomise the name
+    rand_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = rand_hex + f_ext
+    # Save the desired sub directory in the static folder
+    pic_path = os.path.join(app.root_path, 'static', sub_dir, picture_fn)
+    # Scale the image according to parameters given by output_size
+    img = Image.open(form_picture)
+    img.thumbnail(output_size)
+    img.save(pic_path)
+    # Return the new name for the picture
+    return picture_fn
+
+
+@app.route("/wallofshame", methods=["GET", "POST"])
+def wallofshame():
+    # TODO Tally disapprovals and apply them when user leaves the page
+    shame_form = NewShamePostForm()
+    if shame_form.validate_on_submit():
+        pic_name = save_picture(shame_form.picture.data, sub_dir="wos_pics", output_size=(1024, 1024))
+        shame_post = ShamePost(
+            houseId=current_user.houseId,
+            userId=current_user.id,
+            postImage=pic_name,
+        )
+        db.session.add(shame_post)
+        db.session.commit()
+        flash(f"Hooray! You have cast shame!", "success")
+        return redirect(url_for("wallofshame"))
+    
+    shame_posts = ShamePost.query.filter_by(houseId=current_user.houseId).all()
+
+    return render_template("wallofshame.html", shame_posts=shame_posts, form=shame_form)
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -118,6 +162,7 @@ def myhouse():
     """
     if not current_user.houseId:
         return redirect(url_for("whathouse"))
+    house = House.query.filter_by(id=current_user.houseId).first()
     # TODO only allow the admin user to see the invites
     invitesWaiting = {}
     for invite in Invite.query.filter_by(
@@ -142,8 +187,8 @@ def myhouse():
             db.session.commit()
             return redirect(url_for("myhouse"))
     # TODO make this an OrderedDict and sort by person with most points
-    ptsUsers = TaskLog.pointsAllUsers(db.session)
-    return render_template("myhouse.html", invites=invitesWaiting, points=ptsUsers)
+    pts_users = TaskLog.pointsAllUsers(db.session, current_user.houseId)
+    return render_template("myhouse.html", house=house.name, invites=invitesWaiting, points=pts_users)
 
 
 @app.route("/whathouse")
@@ -237,6 +282,6 @@ def newtask():
         db.session.add(task)
         db.session.commit()
         flash(f"Task '{taskForm.name.data}' created!", "success")
-        return redirect(url_for("home"))
+        # return redirect(url_for("home"))
 
     return render_template("newtask.html", form=taskForm)

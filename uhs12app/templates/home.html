@@ -10,13 +10,19 @@
     <div class="card-body">
         <h5 class="card-title">{{ task.name }}</h5>
         {% if task.isCooloffActive() %}
-        <h6 class="card-subtitle mb-2 text-muted">Worth {{ task.coolOffValue }} points. Cool off is active</h6>
+        <h6 class="card-subtitle mb-2 text-muted">
+            Worth {{ task.coolOffValue }} points. Cool off is active, resetting on {{ task.whenCoolOffEnding().strftime("%Y-%m-%d") }}
+        </h6>
         {% else %}
         <h6 class="card-subtitle mb-2 text-muted">Worth {{ task.value }} points</h6>
         {% endif %}
         <p class="card-text">{{ task.description }}</p>
         <div>
-            <small>Last completed by {{ task.lastCompletedPerson() }} on {{ task.lastCompletedDate() }}</small>
+            {% if task.lastCompletedDate %}
+            <small>Last completed by {{ task.lastCompletedBy.username }} on {{ task.lastCompletedDate.strftime("%Y-%m-%d") }}</small>
+            {% else %}
+            <small>No one has completed this task yet!</small>
+            {% endif %}
         </div>
         <a href="{{ url_for('taskcomplete', taskid=task.id) }}" class="card-link">Complete</a>
     </div>

@@ -1,7 +1,7 @@
 """
 Models for uhs12
 """
-from datetime import datetime
+import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from flask_login import UserMixin
@@ -26,6 +26,7 @@ class User(db.Model, UserMixin):
     email = Column(String(120), unique=True, nullable=False)
     password = Column(String(60), nullable=False)
     profilePic = Column(String(120), nullable=False, default="default.jpg")
+    dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
@@ -36,7 +37,7 @@ class House(db.Model):
     name = Column(String(20), nullable=False)
     # TODO Make this a foreign key
     adminId = Column(Integer, nullable=False)
-    dateCreated = Column(DateTime, nullable=False, default=datetime.utcnow)
+    dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     members = relationship("User", backref="whaat", lazy=True)
     shamePosts = relationship("ShamePost", backref="wtf_is_this", lazy=True)
 
@@ -46,6 +47,7 @@ class Invite(db.Model):
     houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
     idUserInvited = Column(Integer, ForeignKey("user.id"), nullable=False)
     isResponded = Column(Boolean, nullable=False, default=False)
+    dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
 
 
 class Task(db.Model):
@@ -56,19 +58,30 @@ class Task(db.Model):
     value = Column(Integer, nullable=False)
     coolOffPeriod = Column(Integer, nullable=False, default=0)
     coolOffValue = Column(Integer, nullable=False, default=0)
+    dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    lastCompletedDate = Column(DateTime, nullable=True, default=None)
+    lastCompletedPersonId = Column(Integer, ForeignKey("user.id"), nullable=True, default=None)
+    lastCompletedBy = relationship("User", backref="lastCompleted")
 
-    # Function to see if cool off is active
     def isCooloffActive(self):
-        # TODO implement
-        return False
+        if not self.lastCompletedDate:
+            return False
+        return self.lastCompletedDate + datetime.timedelta(days=self.coolOffPeriod) > datetime.datetime.utcnow()
 
-    def lastCompletedDate(self):
-        # TODO implement
-        return "2019-10-15"
 
-    def lastCompletedPerson(self):
-        # TODO implement
-        return "Bill"
+    def currentValue(self):
+        return self.value if not self.isCooloffActive() else self.coolOffValue
+
+
+    def whenCoolOffEnding(self):
+        if not self.isCooloffActive():
+            return None
+        return self.lastCompletedDate + datetime.timedelta(days=self.coolOffPeriod)
+
+    def updateCompleted(self, user):
+        # TODO Does lastCompletedBy backref get updated too ..? Test this 
+        self.lastCompletedPersonId = user.id
+        self.lastCompletedDate = datetime.datetime.utcnow()
 
 
 class TaskLog(db.Model):
@@ -78,23 +91,36 @@ class TaskLog(db.Model):
     task = relationship("Task", backref="taskCompleted")
     idUser = Column(Integer, ForeignKey("user.id"), nullable=False)
     user = relationship("User", backref="taskOwner")
-    dateCreated = Column(DateTime, nullable=False, default=datetime.utcnow)
+    dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     value = Column(Integer, nullable=False)
     coolOff = Column(Boolean, nullable=False, default=False)
 
     @staticmethod
-    def pointsByUser(session, user):
-        tasksByuser = session.query(TaskLog).filter_by(idUser=user.id).all()
+    def pointsByUser(session, user, house_id):
+        # User can be in multiple houses so need to filter by both user and house id
+        tasksByuser = session.query(TaskLog).filter_by(idUser=user.id, houseId=house_id).all()
         totalPts = sum([task.value for task in tasksByuser])
         return totalPts
 
     @classmethod
-    def pointsAllUsers(cls, session):
-        allUsers = session.query(User).all()
-        ptsByUser = {}
+    def pointsAllUsers(cls, session, house_id):
+        # TODO how to handle when there's multiple houses per user 
+        allUsers = session.query(User).filter_by(houseId=house_id)
+        ptsByUser = {}  # TODO dict comprehension
         for user in allUsers:
-            ptsByUser[user] = cls.pointsByUser(session, user)
+            ptsByUser[user] = cls.pointsByUser(session, user, house_id)
         return ptsByUser
+
+
+class ShamePost(db.Model):
+    id = Column(Integer, primary_key=True)
+    houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
+    userId = Column(Integer, nullable=False)
+    # TODO: Don't allow default because it should never happen
+    postImage = Column(String(50), nullable=False, default="default.jpg")
+    comment = Column(String(140))
+    disapprovalCount = Column(Integer, nullable=False, default=0)
+    dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
 
 
 #  Db schema
@@ -131,13 +157,3 @@ class TaskLog(db.Model):
 
 
 ###########################
-class ShamePost(db.Model):
-    id = Column(Integer, primary_key=True)
-    houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
-    userId = Column(Integer, nullable=False)
-    # TODO: Don't allow default because it should never happen
-    postImage = Column(String(20), nullable=False, default="default.jpg")
-    comment = Column(String(140))
-    # TODO: this should be some kind of date format, not String
-    disapprovalCount = Column(Integer, nullable=False, default=0)
-    datePosted = Column(String(20))

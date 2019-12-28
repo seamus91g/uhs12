@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">New post for the Wall of Shame</h5>
+        
+        <form method="POST" action="" enctype="multipart/form-data">
+
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+
+                <div class="form-group">
+                    {{ form.picture.label() }}
+                    {{ form.picture(class="form-control-file") }}
+                    {% if form.picture.errors %}
+                        {% for error in form.picture.errors %}
+                            <span class="text-danger">{{ error }}</span></br>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </fieldset>
+            <div class="form-group">
+                {{ form.submit(class="btn btn-outline-info") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+
+{% for shame in shame_posts %}
+
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Title</h5>
+        <h6 class="card-subtitle mb-2 text-muted">{{ shame.dateCreated.strftime("%Y-%m-%d")}}</h6>
+        <img style="max-width: 100%" src="{{ url_for('static', filename='wos_pics/' + shame.postImage) }}"> </img>
+        <div>
+            <small>{{ img_path }}</small>
+        </div>
+    </div>
+</div>
+
+
+{% endfor %}
+
+{% endblock content %}
+

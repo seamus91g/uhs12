@@ -1,10 +1,9 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, IntegerField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, Optional
 from uhs12app.models import User, House, Task
-
-# from flask_wtf.file import FileField, FileAllowed
-# from flask_login import current_user
+from flask_wtf.file import FileField, FileAllowed
+from flask_login import current_user
 
 
 class RegistrationForm(FlaskForm):
@@ -76,21 +75,48 @@ class NewTaskForm(FlaskForm):
     )
     coolOffPeriod = IntegerField(
         "Number of cool off days for the task. The task is worth less points during this time",
-        validators=[DataRequired()],
+        validators=[Optional()],
     )
     coolOffValue = IntegerField(
         "Number of points for completing the task during the cool off period",
-        validators=[DataRequired()],
+        validators=[Optional()],
     )
 
     submit = SubmitField("Create Task")
 
     def validate_name(self, name):
-        newTask = Task.query.filter_by(name=name.data).first()
+        newTask = Task.query.filter_by(name=name.data, houseId=current_user.houseId).first()
         if newTask:
             raise ValidationError(
                 "That task name is taken. Please choose a different name."
             )
+    
+    #### @staticmethod
+    #### # What the heck? Sometimes it's a tuple and sometimes a list ... ?!?!?!
+    #### # TODO make this a decorator
+    # def err_tuple_to_list(form_item):
+    #     if isinstance(form_item.errors, tuple):
+    #         form_item.errors = list(form_item.errors)
 
+    ######## # For some reason, the second method below will not work the same as the first. WTF
+    
+    #### def validate_coolOffValue(self, coolOffValue):
+    ####     if coolOffValue.data and not self.coolOffPeriod.data:
+    ####         NewTaskForm.err_tuple_to_list(self.coolOffPeriod)
+    ####         err_msg = "If you set a cool off value, you must also set number of cool off days! Leave both blank if you don't want a cool off period."
+    ####         self.coolOffPeriod.errors.append(err_msg)
+    ####         print("Cool value: ", self.coolOffPeriod.errors)
 
-#   Task                id hid      name            description         value       coolDownTime        coolDownValue
+    # Ensure coolOffValue if there is a coolOffPeriod
+    # def validate_coolOffPeriod(self, coolOffPeriod):
+    #     if coolOffPeriod.data and not self.coolOffValue.data:
+    #         NewTaskForm.err_tuple_to_list(self.coolOffValue)
+    #         err_msg = "If you set cool off days, you must also set a cool off value! Leave both blank if you don't want a cool off period."
+    #         self.coolOffValue.errors.append(err_msg)
+    #         print("cool period: ", self.coolOffValue.errors)
+
+class NewShamePostForm(FlaskForm):
+    picture = FileField('Upload picture evidence', validators=[DataRequired(), FileAllowed(['jpg', 'png'])])
+
+    submit = SubmitField("Cast shame!")
+
