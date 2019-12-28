@@ -48,7 +48,7 @@ def taskcomplete():
 @login_required
 def tasklog():
     allTasksCompleted = TaskLog.query.all()
-    task1 = allTasksCompleted[0]
+    # task1 = allTasksCompleted[0]      # TODO what if no tasks, index error 
     return render_template(
         "tasklog.html", tasklog=allTasksCompleted, currUser=current_user
     )

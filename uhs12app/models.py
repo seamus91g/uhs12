@@ -80,6 +80,7 @@ class TaskLog(db.Model):
     user = relationship("User", backref="taskOwner")
     dateCreated = Column(DateTime, nullable=False, default=datetime.utcnow)
     value = Column(Integer, nullable=False)
+    coolOff = Column(Boolean, nullable=False, default=False)
 
     @staticmethod
     def pointsByUser(session, user):
