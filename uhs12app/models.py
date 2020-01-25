@@ -4,8 +4,9 @@ Models for uhs12
 import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask_login import UserMixin
-from uhs12app import db, login_manager
+from uhs12app import db, login_manager, app
 
 
 @login_manager.user_loader
@@ -17,6 +18,7 @@ class User(db.Model, UserMixin):
     """
     User login model
     """
+    TOKEN_KEY = 'user_id'
 
     id = Column(Integer, primary_key=True)
     # User may not yet have joined a house, thus nullable is true
@@ -27,6 +29,19 @@ class User(db.Model, UserMixin):
     password = Column(String(60), nullable=False)
     profilePic = Column(String(120), nullable=False, default="default.jpg")
     dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+
+    def get_reset_token(self, expires_sec=1800):
+        s = Serializer(app.config['SECRET_KEY'], expires_sec)
+        return s.dumps({User.TOKEN_KEY: self.id}).decode('utf-8')
+    
+    @staticmethod
+    def verify_reset_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            user_id = s.loads(token)[User.TOKEN_KEY]
+        except:
+            return None
+        return User.query.get(user_id)
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
@@ -93,6 +108,7 @@ class TaskLog(db.Model):
     user = relationship("User", backref="taskOwner")
     dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     value = Column(Integer, nullable=False)
+    # TODO why do we need the coolOff bool??
     coolOff = Column(Boolean, nullable=False, default=False)
 
     @staticmethod

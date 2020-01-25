@@ -4,7 +4,7 @@ from datetime import datetime
 from PIL import Image
 from flask import render_template, url_for, flash, redirect, request
 from flask_login import login_user, current_user, logout_user, login_required
-from uhs12app import app, db, bcrypt
+from uhs12app import app, db, bcrypt, mail
 from uhs12app.forms import (
     RegistrationForm,
     LoginForm,
@@ -13,8 +13,11 @@ from uhs12app.forms import (
     ReplyInviteForm,
     NewTaskForm,
     NewShamePostForm,
+    RequestResetForm,
+    ResetPasswordForm,
 )
 from uhs12app.models import User, House, Invite, Task, TaskLog, ShamePost
+from flask_mail import Message
 
 
 @app.route("/")
@@ -40,6 +43,7 @@ def taskcomplete():
         taskId=taskCompleted.id,
         idUser=current_user.id,
         value=taskCompleted.currentValue(),
+        coolOff=taskCompleted.isCooloffActive(),
     )
     taskCompleted.updateCompleted(current_user)
     db.session.add(taskItem)
@@ -51,7 +55,8 @@ def taskcomplete():
 @app.route("/tasklog")
 @login_required
 def tasklog():
-    allTasksCompleted = TaskLog.query.filter_by(houseId=current_user.houseId)
+    page_num = request.args.get('page', 1, type=int)
+    allTasksCompleted = TaskLog.query.order_by(TaskLog.dateCreated.desc()).filter_by(houseId=current_user.houseId).paginate(per_page=20, page=page_num)
     return render_template(
         "tasklog.html", tasklog=allTasksCompleted, currUser=current_user
     )
@@ -257,7 +262,6 @@ def join():
         house = House.query.filter_by(name=join_form.name.data).first()
         new_invite = Invite(houseId=house.id, idUserInvited=current_user.id)
         db.session.add(new_invite)
-        # current_user.houseId = house.id
         db.session.commit()
         flash(f"Requested to join {join_form.name.data}!", "success")
         return redirect(url_for("whathouse"))
@@ -282,6 +286,56 @@ def newtask():
         db.session.add(task)
         db.session.commit()
         flash(f"Task '{taskForm.name.data}' created!", "success")
-        # return redirect(url_for("home"))
+        return redirect(url_for("home"))
 
     return render_template("newtask.html", form=taskForm)
+
+def send_reset_email(user):
+    token = user.get_reset_token()
+    # msg = Message('Password Reset Request', sender='noreply@demo.com', recipients=[user.email])
+    msg = Message('Password Reset Request', sender=app.config['MAIL_USERNAME'], recipients=[user.email])
+    msg.body = f"""
+    To reset your password, visit the following link: 
+    {url_for('reset_token', token=token, _external=True)}
+    
+    If you did not request a password reset then please ignore this email. 
+    """
+    mail.send(msg)
+
+@app.route("/reset_password", methods=["GET", "POST"])
+def reset_request():
+    """
+
+    """
+    if current_user.is_authenticated:
+        return redirect(url_for("home"))
+    resetForm = RequestResetForm()
+    if resetForm.validate_on_submit():
+        user = User.query.filter_by(email=resetForm.email.data).first()
+        send_reset_email(user)
+        print(f"Emailing: {user.email}")
+        flash('An email has been sent with instructions to reset your password.', 'info')
+        return redirect(url_for('login'))
+    return render_template("reset_request.html", title='Reset Password', form=resetForm)
+
+@app.route("/reset_password/<token>", methods=["GET", "POST"])
+def reset_token(token):
+    """
+
+    """
+    if current_user.is_authenticated:
+        return redirect(url_for("home"))
+    user = User.verify_reset_token(token)
+    if not user:
+        flash('Thas is an invalid or expired token', 'warning')
+        return redirect(url_for('reset_request'))
+    pwForm = ResetPasswordForm()
+    if pwForm.validate_on_submit():
+        hashedPw = bcrypt.generate_password_hash(pwForm.password.data).decode("utf-8")
+        user.password = hashedPw
+        db.session.commit()
+        flash(
+            f"Your password has been updated! You can now log in", "success",
+        )
+        return redirect(url_for("login"))
+    return render_template("reset_token.html", title='Reset Password', form=pwForm)

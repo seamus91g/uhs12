@@ -4,7 +4,7 @@
 
 <p>History of all tasks completed</p>
 
-{% for taskComplete in tasklog %}
+{% for taskComplete in tasklog.items %}
 
 <div class="card">
     <div class="card-body">
@@ -19,6 +19,20 @@
     </div>
 </div>
 
+{% endfor %}
+
+{% for page_num in tasklog.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=3) %}
+    {% if page_num %}
+        {% if tasklog.page == page_num %}
+        <a class="btn btn-info mb-4" href="{{ url_for('tasklog', page=page_num) }}">{{ page_num }}</a>
+        {% else %}
+        <a class="btn btn-outline-info mb-4" href="{{ url_for('tasklog', page=page_num) }}">{{ page_num }}</a>
+
+        {% endif %}
+
+    {% else %}
+        ...
+    {% endif %}
 {% endfor %}
 
 
