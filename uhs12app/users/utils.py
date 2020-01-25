@@ -1,7 +1,7 @@
 import os
 import secrets
 from PIL import Image
-from uhs12app import app
+from flask import current_app
 
 
 def save_picture(form_picture, sub_dir="wos_pics", output_size=(512, 512)):
@@ -15,7 +15,7 @@ def save_picture(form_picture, sub_dir="wos_pics", output_size=(512, 512)):
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = rand_hex + f_ext
     # Save the desired sub directory in the static folder
-    pic_path = os.path.join(app.root_path, 'static', sub_dir, picture_fn)
+    pic_path = os.path.join(current_app.root_path, 'static', sub_dir, picture_fn)
     # Scale the image according to parameters given by output_size
     img = Image.open(form_picture)
     img.thumbnail(output_size)

@@ -2,9 +2,9 @@ import os
 import secrets
 from datetime import datetime
 from PIL import Image
-from flask import render_template, url_for, flash, redirect, request
+from flask import render_template, url_for, flash, redirect, request, current_app
 from flask_login import login_user, current_user, logout_user, login_required
-from uhs12app import app, db, bcrypt, mail
+from uhs12app import db, bcrypt, mail
 from uhs12app.users.forms import (
     RegistrationForm,
     LoginForm,
@@ -66,7 +66,7 @@ def logout():
 def send_reset_email(user):
     token = user.get_reset_token()
     # msg = Message('Password Reset Request', sender='noreply@demo.com', recipients=[user.email])
-    msg = Message('Password Reset Request', sender=app.config['MAIL_USERNAME'], recipients=[user.email])
+    msg = Message('Password Reset Request', sender=current_app.config['MAIL_USERNAME'], recipients=[user.email])
     msg.body = f"""
     To reset your password, visit the following link: 
     {url_for('users.reset_token', token=token, _external=True)}

@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect, request
 from flask_login import current_user, login_required
-from uhs12app import app, db, bcrypt, mail
+from uhs12app import db, bcrypt, mail
 from uhs12app.tasks.forms import (
     NewTaskForm,
 )
