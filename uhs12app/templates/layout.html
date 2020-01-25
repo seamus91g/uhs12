@@ -31,19 +31,19 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarToggle">
                     <div class="navbar-nav mr-auto">
-                        <a class="nav-item nav-link" href="{{ url_for('home') }}">Tasks</a>
-                        <a class="nav-item nav-link" href="{{ url_for('myhouse') }}">My House</a>
-                        <a class="nav-item nav-link" href="{{ url_for('tasklog') }}">Task Log</a>
-                        <a class="nav-item nav-link" href="{{ url_for('wallofshame') }}">Wall of Shame</a>
+                        <a class="nav-item nav-link" href="{{ url_for('tasks.home') }}">Tasks</a>
+                        <a class="nav-item nav-link" href="{{ url_for('house.myhouse') }}">My House</a>
+                        <a class="nav-item nav-link" href="{{ url_for('tasks.tasklog') }}">Task Log</a>
+                        <a class="nav-item nav-link" href="{{ url_for('main.wallofshame') }}">Wall of Shame</a>
                     </div>
                     <!-- Navbar Right Side -->
                     <div class="navbar-nav">
                         {% if current_user.is_authenticated %}
-                        <a class="nav-item nav-link" href="{{ url_for('logout') }}">Log out</a>
-                        <!-- <a class="nav-item nav-link" href="{{ url_for('newtask') }}">New Task</a> -->
+                        <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Log out</a>
+                        <!-- <a class="nav-item nav-link" href="{{ url_for('tasks.newtask') }}">New Task</a> -->
                         {% else %}
-                        <a class="nav-item nav-link" href="{{ url_for('login') }}">Log in</a>
-                        <a class="nav-item nav-link" href="{{ url_for('signup') }}">Sign up</a>
+                        <a class="nav-item nav-link" href="{{ url_for('users.login') }}">Log in</a>
+                        <a class="nav-item nav-link" href="{{ url_for('users.signup') }}">Sign up</a>
                         {% endif %}
                     </div>
                 </div>

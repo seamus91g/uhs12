@@ -12,7 +12,7 @@
         <h6 class="card-subtitle mb-2 text-muted">Completed by {{ taskComplete.user.username }} on {{ taskComplete.dateCreated.strftime("%Y-%m-%d") }} </h6>
         <!-- <p class="card-text">{{ taskComplete.description }}</p> -->
         {% if currUser.id == taskComplete.user.id %}
-        <a href="{{ url_for('taskdelete', taskid=taskComplete.id) }}" class="card-link">Delete</a>
+        <a href="{{ url_for('tasks.taskdelete', taskid=taskComplete.id) }}" class="card-link">Delete</a>
         {% endif %}
         <!-- <input type="submit" class="btn btn-primary" name="submit_button" value="complete"> -->
         <!-- <button type="submit" class="btn btn-primary">Complete</button> -->
@@ -24,9 +24,9 @@
 {% for page_num in tasklog.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=3) %}
     {% if page_num %}
         {% if tasklog.page == page_num %}
-        <a class="btn btn-info mb-4" href="{{ url_for('tasklog', page=page_num) }}">{{ page_num }}</a>
+        <a class="btn btn-info mb-4" href="{{ url_for('tasks.tasklog', page=page_num) }}">{{ page_num }}</a>
         {% else %}
-        <a class="btn btn-outline-info mb-4" href="{{ url_for('tasklog', page=page_num) }}">{{ page_num }}</a>
+        <a class="btn btn-outline-info mb-4" href="{{ url_for('tasks.tasklog', page=page_num) }}">{{ page_num }}</a>
 
         {% endif %}
 

@@ -8,8 +8,8 @@
         {% if pending_invite %}
             <p>Requested to join house {{ pending_invite }}. Waiting for response.</p>
         {% else %}
-            <a class="nav-item nav-link" href="{{ url_for('create') }}">Create a house</a>
-            <a class="nav-item nav-link" href="{{ url_for('join') }}">Join a house</a>
+            <a class="nav-item nav-link" href="{{ url_for('house.create') }}">Create a house</a>
+            <a class="nav-item nav-link" href="{{ url_for('house.join') }}">Join a house</a>
         {% endif %}
 
     </div>
