@@ -13,8 +13,7 @@ login_manager.login_view = "users.login"
 login_manager.login_message_category = "info"
 
 mail = Mail()
-
-def create_app(config_class=Config):
+def create_app(config_class=Config, create_db=False):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
@@ -33,5 +32,11 @@ def create_app(config_class=Config):
     app.register_blueprint(house)
     app.register_blueprint(main)
     app.register_blueprint(errors)
+
+
+    if create_db:
+        print("Creating db at: ", config_class.SQLALCHEMY_DATABASE_URI)
+        with app.app_context():
+            db.create_all()
 
     return app
