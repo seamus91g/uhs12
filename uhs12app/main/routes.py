@@ -1,5 +1,6 @@
 from flask import render_template, url_for, flash, redirect
-from flask_login import current_user
+
+from flask_login import current_user, login_required
 from uhs12app import db
 from uhs12app.main.forms import (
     NewShamePostForm,
@@ -12,6 +13,7 @@ main = Blueprint('main', __name__)
 
 
 @main.route("/wallofshame", methods=["GET", "POST"])
+@login_required
 def wallofshame():
     # TODO Tally disapprovals and apply them when user leaves the page
     shame_form = NewShamePostForm()
