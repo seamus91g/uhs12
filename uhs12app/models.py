@@ -132,7 +132,7 @@ class TaskLog(db.Model):
 class ShamePost(db.Model):
     id = Column(Integer, primary_key=True)
     houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
-    userId = Column(Integer, nullable=False)
+    userId = Column(Integer, ForeignKey("user.id"), nullable=False)
     # TODO: Don't allow default because it should never happen
     postImage = Column(String(50), nullable=False, default="default.jpg")
     comment = Column(String(140))
@@ -140,13 +140,47 @@ class ShamePost(db.Model):
     dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
 
 
+class TaskRequest(db.Model):
+    id = Column(Integer, primary_key=True)
+    houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
+    taskId = Column(Integer, ForeignKey("task.id"), nullable=False)
+    userId = Column(Integer, ForeignKey("user.id"), nullable=False)
+    # TODO change userClaimed to idUserClaimed
+    userClaimed = Column(Integer, ForeignKey("user.id"), nullable=True)
+    dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    isExpired = Column(Boolean, nullable=False, default=False)
+
+    @staticmethod
+    def updateExpired(allTaskRequests):
+        for task in allTaskRequests:
+            # if created + 1 day < now
+            if task.dateCreated + datetime.timedelta(days=1) < datetime.datetime.utcnow():
+                task.isExpired = True
+        return {task for task in allTaskRequests if not task.isExpired}
+
+class TaskClaim(db.Model):
+    id = Column(Integer, primary_key=True)
+    houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
+    taskId = Column(Integer, ForeignKey("task.id"), nullable=False)
+    userId = Column(Integer, ForeignKey("user.id"), nullable=False)
+    dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    isExpired = Column(Boolean, nullable=False, default=False)
+    userClaimed = relationship("User", backref="taskClaimer")
+
+    @staticmethod
+    def updateExpired(allTaskRequests):
+        # This is dirty. Create some ABC thing or even inheritance
+        return TaskRequest.updateExpired(allTaskRequests)
+
 #  Db schema
 # # # # # # # #
 #   User                id hid^     username        mail                password    dateCreated
 #   House               id          dateCreated     adminUserId         <User>      <ShamePost>
-#   WaitingInvites      id hid      idUserInvited   responded
+#   WaitingInvites      id hid      idUserInvited   respondedBool
 #   Task                id hid      name            description         value       coolDownTime        coolDownValue
 #   TaskLog             id hid      taskId          userId              date
+#   Request             id hid      taskId         userId              date        idClaimer           isExpired
+#   TaskClaim           id hid      taskId         userId               date        isExpired
 #
 #   ShamePost           id hid      userCreated     photo               comment     disapprovalCount    date
 ##   ShameComments      id hid      shameLogId      user                comment     date

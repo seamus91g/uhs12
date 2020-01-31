@@ -1,5 +1,4 @@
 from flask import render_template, url_for, flash, redirect
-
 from flask_login import current_user, login_required
 from uhs12app import db
 from uhs12app.main.forms import (
@@ -10,7 +9,6 @@ from flask import Blueprint
 from uhs12app.users.utils import save_picture
 
 main = Blueprint('main', __name__)
-
 
 @main.route("/wallofshame", methods=["GET", "POST"])
 @login_required
