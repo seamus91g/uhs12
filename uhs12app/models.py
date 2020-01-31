@@ -94,11 +94,26 @@ class Task(db.Model):
             return None
         return self.lastCompletedDate + datetime.timedelta(days=self.coolOffPeriod)
 
-    def updateCompleted(self, user):
-        # TODO Does lastCompletedBy backref get updated too ..? Test this 
+    def setLastCompleted(self, user, date=None):
         self.lastCompletedPersonId = user.id
-        self.lastCompletedDate = datetime.datetime.utcnow()
+        self.lastCompletedBy = user
+        if date:
+            self.lastCompletedDate = date
+        else:
+            self.lastCompletedDate = datetime.datetime.utcnow()
+    
+    def removeLastCompleted(self):
+        self.lastCompletedDate = None
+        self.lastCompletedPersonId = None
+        self.lastCompletedBy = None
 
+    def refreshLastCompleted(self):
+        from sqlalchemy import desc
+        previousCompletion = TaskLog.query.filter_by(taskId=self.id).order_by(desc("dateCreated")).first()
+        if previousCompletion:
+            self.setLastCompleted(previousCompletion.completedBy, previousCompletion.dateCreated)
+        else:
+            self.removeLastCompleted()
 
 class TaskLog(db.Model):
     id = Column(Integer, primary_key=True)
@@ -109,7 +124,8 @@ class TaskLog(db.Model):
     user = relationship("User", backref="taskOwner")
     dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     value = Column(Integer, nullable=False)
-    # TODO why do we need the coolOff bool??
+    completedBy = relationship("User", backref="completedBy")
+    # Record if task was completed during cool off period
     coolOff = Column(Boolean, nullable=False, default=False)
 
     @staticmethod

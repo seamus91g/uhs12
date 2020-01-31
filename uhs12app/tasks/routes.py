@@ -45,6 +45,16 @@ class TaskBoardInfo(object):
     # Return true if the given user has an open request on the task 
     def has_user_requested(self, user, task):
         return user.id == self.requester_id(task)
+    
+    def has_other_user_claimed(self, user, task):
+        # False if there's no open claim
+        if not self.claim_id(task):
+            return False
+        # False if this user has a claim
+        if self.claimer_id(task) == user.id:
+            return False
+        # Another user must have an open claim 
+        return True
 
 @tasks.route("/")
 @tasks.route("/home", methods=["GET", "POST"])
@@ -132,11 +142,11 @@ def taskcomplete():
     if request.args.get("claimid"):
         # TODO isExpired filter is pointless here, how could we get here with an expired one? 
         # TODO this should only ever be one item, ensure this is correct
-        claims = TaskClaim.query.filter_by(id=int(request.args["claimid"], isExpired=False)).all()
+        claims = TaskClaim.query.filter_by(id=int(request.args["claimid"]), isExpired=False).all()
         for claim in claims: 
             claim.isExpired = True
     if request.args.get("requestid"):
-        taskRequests = TaskRequest.query.filter_by(id=int(request.args["requestid"], isExpired=False)).all()
+        taskRequests = TaskRequest.query.filter_by(id=int(request.args["requestid"]), isExpired=False).all()
         for taskReq in taskRequests: 
             taskReq.isExpired = True
     taskCompleted = Task.query.filter_by(id=int(request.args["taskid"])).first()
@@ -148,12 +158,12 @@ def taskcomplete():
         value=taskCompleted.currentValue(),
         coolOff=taskCompleted.isCooloffActive(),
     )
-    taskCompleted.updateCompleted(current_user)
     db.session.add(taskItem)
     db.session.commit()
+    taskCompleted.setLastCompleted(current_user, taskItem.dateCreated)
     flash(f"Great work! You completed task '{taskCompleted.name}'", "success")
+    db.session.commit()
     return redirect(url_for("tasks.home"))
-
 
 
 @tasks.route("/taskdelete", methods=["GET", "POST"])
@@ -162,6 +172,11 @@ def taskdelete():
     taskLogItem = TaskLog.query.filter_by(id=int(request.args["taskid"])).first()
     nameDeleted = taskLogItem.task.name
     db.session.delete(taskLogItem)
+    # Update last completed time of task
+    # If date doesn't match, doesn't need updating
+    task = Task.query.filter_by(id=taskLogItem.taskId).first()
+    if task.lastCompletedDate == taskLogItem.dateCreated:
+        task.refreshLastCompleted()
     db.session.commit()
     flash(f"You deleted task '{nameDeleted}'", "info")
     return redirect(url_for("tasks.tasklog"))

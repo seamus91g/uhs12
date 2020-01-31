@@ -37,14 +37,15 @@
             <small>You have requested this task to be completed!</small>
             {% elif task_info.request_id(task) %}
             <small>Someone has requested this task to be completed!</small>
-            {% elif task_info.has_user_claimed(curr_user, task) %}
+            {% endif %}
+            {% if task_info.has_user_claimed(curr_user, task) %}
             <small>You have claimed this task!</small>
             {% elif task_info.claim_id(task) %}
             <small>This task is currently claimed!</small>
             {% endif %}
         </div>
         <!-- You can't complete a task that is claimed by another user -->
-        {% if not task_info.claim_id(task) and not task_info.claimer_id(task) == curr_user.id %}
+        {% if not task_info.has_other_user_claimed(curr_user, task) %}
             <a href="{{ url_for('tasks.taskcomplete', taskid=task.id, requestid=task_info.request_id(task), claimid=task_info.claim_id(task)) }}" class="card-link">Complete</a>
         {% endif %}
         {% if not task_info.claim_id(task) %}
