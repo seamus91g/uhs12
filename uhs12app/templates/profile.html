@@ -1,0 +1,42 @@
+
+{% extends "layout.html" %}
+
+{% block content %}
+
+
+<div class="content-section">
+    
+    <div class="media-body">
+        <h2 class="account-heading">{{ current_user.username }}</h2>
+        <p class="text-secondary">{{ current_user.email }}</p>
+    </div>
+    <div class="media-body">
+        
+        {% if house %}
+        <p>You are currently a member of {{ house.name }}</p>
+        {% else %}
+        <p>You are not a member of any house.</p>
+        {% endif %}
+        {% if other_joined %}
+            <p>You are also a member of the following houses. Click one of them to set it as your active house. </p>
+            {% for house in other_joined %}
+            <a href="{{ url_for('users.setactive', houseid=house.id) }}" class="card-link">{{ house.name }}</a>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <div class="media-body">
+        <p></p>
+    </div>
+    <div class="media-body">
+        {% if house %}
+        <a href="{{ url_for('house.leavehouse', houseid=house.id) }}" class="card-link">Leave {{ house.name }}</a>
+        {% endif %}
+        <a href="{{ url_for('house.join', allowextra=True) }}" class="card-link">Join a house</a>
+        <a href="{{ url_for('house.create', allowextra=True) }}" class="card-link">Create a new house</a>
+    </div>
+    
+
+</div>
+
+
+{% endblock content %}

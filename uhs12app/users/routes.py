@@ -18,6 +18,25 @@ from flask import Blueprint
 users = Blueprint('users', __name__)
 
 
+@users.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    primary_house = current_user.active_house()
+    # List of joined houses that are not my currently active house
+    other_joined = [member.house for member in current_user.active_memberships() if member.houseId != primary_house.id]
+    return render_template("profile.html", current_user=current_user, house=primary_house, other_joined=other_joined)
+
+
+@users.route("/setactive", methods=["GET", "POST"])
+@login_required
+def setactive():
+    """Set which house is your active house"""
+    house_id = request.args.get("houseid")
+    current_user.activeHouseId = house_id
+    db.session.commit()
+    return redirect(url_for("users.profile"))
+
+
 @users.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
@@ -27,7 +46,7 @@ def login():
         user = User.query.filter_by(email=login_form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, login_form.password.data):
             login_user(user, remember=login_form.remember.data)
-            if user.houseId:
+            if user.activeHouseId:
                 return redirect(url_for("tasks.home"))
             return redirect(url_for("house.whathouse"))
             # next_page = request.args.get("next")

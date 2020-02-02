@@ -25,7 +25,7 @@ class NewTaskForm(FlaskForm):
     submit = SubmitField("Create Task")
 
     def validate_name(self, name):
-        newTask = Task.query.filter_by(name=name.data, houseId=current_user.houseId).first()
+        newTask = Task.query.filter_by(name=name.data, houseId=current_user.activeHouseId).first()
         if newTask:
             raise ValidationError(
                 "That task name is taken. Please choose a different name."

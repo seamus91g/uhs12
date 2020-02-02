@@ -22,19 +22,29 @@ class User(db.Model, UserMixin):
     TOKEN_KEY = 'user_id'
 
     id = Column(Integer, primary_key=True)
+    # User can be in multiple houses, but only one is active at a time
     # User may not yet have joined a house, thus nullable is true
-    houseId = Column(Integer, ForeignKey("house.id"), nullable=True)
+    activeHouseId = Column(Integer, ForeignKey("house.id"), nullable=True)
     # Username should actually just be unique per house TODO: how to enforce this?
     username = Column(String(20), unique=True, nullable=False)
     email = Column(String(120), unique=True, nullable=False)
     password = Column(String(60), nullable=False)
     profilePic = Column(String(120), nullable=False, default="default.jpg")
     dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    memberships = relationship("Membership", backref="houseJoined", lazy=True)
+
+
+    def active_house(self):
+        return House.query.filter_by(id=self.activeHouseId).first()
 
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
         return s.dumps({User.TOKEN_KEY: self.id}).decode('utf-8')
     
+    def active_memberships(self):
+        return [membr for membr in self.memberships if not membr.isExpired]
+
+
     @staticmethod
     def verify_reset_token(token):
         s = Serializer(current_app.config['SECRET_KEY'])
@@ -47,6 +57,16 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
 
+class Membership(db.Model):
+    id = Column(Integer, primary_key=True)
+    houseId = Column(Integer, ForeignKey("house.id"), nullable=False)
+    idUser = Column(Integer, ForeignKey("user.id"), nullable=False)
+    # isExpired is true if the user has left the house
+    isExpired = Column(Boolean, nullable=False, default=False)
+    dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+    house = relationship("House", backref="house")
+    user = relationship("User", backref="user")
+
 
 class House(db.Model):
     id = Column(Integer, primary_key=True)
@@ -54,8 +74,11 @@ class House(db.Model):
     # TODO Make this a foreign key
     adminId = Column(Integer, nullable=False)
     dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
-    members = relationship("User", backref="whaat", lazy=True)
+    members = relationship("Membership", backref="whaat", lazy=True)
     shamePosts = relationship("ShamePost", backref="wtf_is_this", lazy=True)
+
+    def active_memberships(self):
+        return [membr for membr in self.members if not membr.isExpired]
 
 
 class Invite(db.Model):
@@ -138,10 +161,11 @@ class TaskLog(db.Model):
     @classmethod
     def pointsAllUsers(cls, session, house_id):
         # TODO how to handle when there's multiple houses per user 
-        allUsers = session.query(User).filter_by(houseId=house_id)
+        all_members = session.query(Membership).filter_by(houseId=house_id, isExpired=False)
+        # allUsers = session.query(User).filter_by(activeHouseId=house_id)
         ptsByUser = {}  # TODO dict comprehension
-        for user in allUsers:
-            ptsByUser[user] = cls.pointsByUser(session, user, house_id)
+        for member in all_members:
+            ptsByUser[member.user] = cls.pointsByUser(session, member.user, house_id)
         return ptsByUser
 
 

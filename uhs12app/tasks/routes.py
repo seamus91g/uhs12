@@ -63,9 +63,9 @@ def home():
     """
     The home page will contain your list of tasks
     """
-    if not current_user.houseId:
+    if not current_user.activeHouseId:
         return redirect(url_for("house.whathouse"))
-    task_info = TaskBoardInfo(current_user.houseId)
+    task_info = TaskBoardInfo(current_user.activeHouseId)
     db.session.commit()    # TODO is this commit needed? To update expired?
     return render_template("home.html", task_info=task_info, curr_user=current_user)
 
@@ -76,7 +76,7 @@ def taskrequest():
     # Create a request
     taskRequested = Task.query.filter_by(id=int(request.args["taskid"])).first()
     newRequest = TaskRequest(
-        houseId=current_user.houseId,
+        houseId=current_user.activeHouseId,
         taskId=taskRequested.id,
         userId=current_user.id,
     )
@@ -93,7 +93,7 @@ def taskclaim():
     taskClaimed = Task.query.filter_by(id=int(request.args["taskid"])).first()
     # Create a claim 
     newClaim = TaskClaim(
-        houseId=current_user.houseId,
+        houseId=current_user.activeHouseId,
         taskId=taskClaimed.id,
         userId=current_user.id,
     )
@@ -107,12 +107,12 @@ def taskclaim():
 @tasks.route("/newtask", methods=["GET", "POST"])
 @login_required
 def newtask():
-    if not current_user.houseId:
+    if not current_user.activeHouseId:
         return redirect(url_for("house.whathouse"))
     taskForm = NewTaskForm()
     if taskForm.validate_on_submit():
         task = Task(
-            houseId=current_user.houseId,
+            houseId=current_user.activeHouseId,
             name=taskForm.name.data,
             description=taskForm.description.data,
             value=taskForm.value.data,
@@ -130,8 +130,10 @@ def newtask():
 @tasks.route("/tasklog")
 @login_required
 def tasklog():
+    if not current_user.activeHouseId:
+        return redirect(url_for("house.whathouse"))
     page_num = request.args.get('page', 1, type=int)
-    allTasksCompleted = TaskLog.query.order_by(TaskLog.dateCreated.desc()).filter_by(houseId=current_user.houseId).paginate(per_page=20, page=page_num)
+    allTasksCompleted = TaskLog.query.order_by(TaskLog.dateCreated.desc()).filter_by(houseId=current_user.activeHouseId).paginate(per_page=20, page=page_num)
     return render_template(
         "tasklog.html", tasklog=allTasksCompleted, currUser=current_user
     )
@@ -152,7 +154,7 @@ def taskcomplete():
     taskCompleted = Task.query.filter_by(id=int(request.args["taskid"])).first()
     # TODO if last completed date is with cool off window, value is cool off value
     taskItem = TaskLog(
-        houseId=current_user.houseId,
+        houseId=current_user.activeHouseId,
         taskId=taskCompleted.id,
         idUser=current_user.id,
         value=taskCompleted.currentValue(),

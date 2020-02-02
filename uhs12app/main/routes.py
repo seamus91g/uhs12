@@ -10,15 +10,18 @@ from uhs12app.users.utils import save_picture
 
 main = Blueprint('main', __name__)
 
+
 @main.route("/wallofshame", methods=["GET", "POST"])
 @login_required
 def wallofshame():
+    if not current_user.activeHouseId:
+        return redirect(url_for("house.whathouse"))
     # TODO Tally disapprovals and apply them when user leaves the page
     shame_form = NewShamePostForm()
     if shame_form.validate_on_submit():
         pic_name = save_picture(shame_form.picture.data, sub_dir="wos_pics", output_size=(1024, 1024))
         shame_post = ShamePost(
-            houseId=current_user.houseId,
+            houseId=current_user.activeHouseId,
             userId=current_user.id,
             postImage=pic_name,
         )
@@ -27,6 +30,6 @@ def wallofshame():
         flash(f"Hooray! You have cast shame!", "success")
         return redirect(url_for("main.wallofshame"))
     
-    shame_posts = ShamePost.query.order_by(ShamePost.dateCreated.desc()).filter_by(houseId=current_user.houseId).all()
+    shame_posts = ShamePost.query.order_by(ShamePost.dateCreated.desc()).filter_by(houseId=current_user.activeHouseId).all()
 
     return render_template("wallofshame.html", shame_posts=shame_posts, form=shame_form)
