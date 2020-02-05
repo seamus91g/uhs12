@@ -43,7 +43,7 @@ def login():
         return redirect(url_for("tasks.home"))
     login_form = LoginForm()
     if login_form.validate_on_submit():
-        user = User.query.filter_by(email=login_form.email.data).first()
+        user = User.query.filter(User.email.ilike(login_form.email.data)).first()
         if user and bcrypt.check_password_hash(user.password, login_form.password.data):
             login_user(user, remember=login_form.remember.data)
             if user.activeHouseId:
