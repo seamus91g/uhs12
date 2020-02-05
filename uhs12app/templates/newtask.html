@@ -6,9 +6,12 @@
     <form method="POST" action="">
         {{ form.hidden_tag() }}
 
-
         <fieldset class="form-group">
+            {% if once_off %}
+            <legend class="border-bottom mb-4">Create a once off task</legend>
+            {% else %}
             <legend class="border-bottom mb-4">Create a new task</legend>
+            {% endif %}
 
             <div class="form-group">
                 {{ form.name.label(class="form-control-label")}}
@@ -39,14 +42,6 @@
                 {% endif %}
 
             </div>
-<!-- name = StringField('Task name',
-                validators=[DataRequired(), Length(min=2, max=20)])
-description = StringField('Task instructions',
-            validators=[Length(min=0, max=140)])
-value = IntegerField('Number of points for completing the task', validators=[DataRequired()])
-coolOffPeriod = IntegerField('Number of cool off days for the task. The task is worth less points during this time', validators=[DataRequired()])
-coolOffValue = IntegerField('Number of points for completing the task', validators=[DataRequired()]) -->
-
             <div class="form-group">
                 {{ form.value.label(class="form-control-label")}}
                 {% if form.value.errors %}
@@ -62,36 +57,38 @@ coolOffValue = IntegerField('Number of points for completing the task', validato
                 {% endif %}
 
             </div>
-            <div class="form-group">
-                {{ form.coolOffPeriod.label(class="form-control-label")}}
-                {% if form.coolOffPeriod.errors %}
-                {{ form.coolOffPeriod(class="form-control form-control-lg is-invalid")}}
-                <div class="invalid-feedback">
-                    {% for error in form.coolOffPeriod.errors %}
-                    <span>{{ error }}</span>
-                    {% endfor %}
+            {% if not once_off %}
+                <div class="form-group">
+                    {{ form.coolOffPeriod.label(class="form-control-label")}}
+                    {% if form.coolOffPeriod.errors %}
+                    {{ form.coolOffPeriod(class="form-control form-control-lg is-invalid")}}
+                    <div class="invalid-feedback">
+                        {% for error in form.coolOffPeriod.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    {{ form.coolOffPeriod(class="form-control form-control-lg")}}
+
+                    {% endif %}
+
                 </div>
-                {% else %}
-                {{ form.coolOffPeriod(class="form-control form-control-lg")}}
+                <div class="form-group">
+                    {{ form.coolOffValue.label(class="form-control-label")}}
+                    {% if form.coolOffValue.errors %}
+                    {{ form.coolOffValue(class="form-control form-control-lg is-invalid")}}
+                    <div class="invalid-feedback">
+                        {% for error in form.coolOffValue.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    {{ form.coolOffValue(class="form-control form-control-lg")}}
 
-                {% endif %}
+                    {% endif %}
 
-            </div>
-            <div class="form-group">
-                {{ form.coolOffValue.label(class="form-control-label")}}
-                {% if form.coolOffValue.errors %}
-                {{ form.coolOffValue(class="form-control form-control-lg is-invalid")}}
-                <div class="invalid-feedback">
-                    {% for error in form.coolOffValue.errors %}
-                    <span>{{ error }}</span>
-                    {% endfor %}
                 </div>
-                {% else %}
-                {{ form.coolOffValue(class="form-control form-control-lg")}}
-
-                {% endif %}
-
-            </div>
+            {% endif %}
 
         </fieldset>
         <div class="form-group">

@@ -28,6 +28,8 @@
         <div>
             {% if task.lastCompletedDate %}
             <small>Last completed by {{ task.lastCompletedBy.username }} on {{ task.lastCompletedDate.strftime("%Y-%m-%d") }}</small>
+            {% elif task.isOnceOff %}
+            <small>This is a once off task</small>
             {% else %}
             <small>No one has completed this task yet!</small>
             {% endif %}
@@ -59,11 +61,11 @@
 
 {% endfor %}
 
-
 <div class="card">
         <div class="card-body">
             <h5 class="card-title">Create a new task</h5>
             <a href="{{ url_for('tasks.newtask') }}" class="card-link">New Task</a>
+            <a href="{{ url_for('tasks.newtask', onceoff=True) }}" class="card-link">Once off Task</a>
         </div>
     </div>
     

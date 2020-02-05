@@ -12,7 +12,7 @@ tasks = Blueprint('tasks', __name__)
 class TaskBoardInfo(object):
     """Info about the taskboard on the home screen"""
     def __init__(self, house_id):
-        allTasks = Task.query.filter_by(houseId=house_id)
+        allTasks = Task.query.filter_by(houseId=house_id, isExpired=False)
         # Sort the tasks with an open request first 
         allTaskRequests = TaskRequest.query.filter_by(houseId=house_id, isExpired=False).all()
         allTaskClaims = TaskClaim.query.filter_by(houseId=house_id, isExpired=False).all()
@@ -86,7 +86,6 @@ def taskrequest():
     return redirect(url_for("tasks.home"))
 
 
-
 @tasks.route("/taskclaim", methods=["GET", "POST"])
 @login_required
 def taskclaim():
@@ -103,10 +102,12 @@ def taskclaim():
     return redirect(url_for("tasks.home"))
 
 
-
 @tasks.route("/newtask", methods=["GET", "POST"])
 @login_required
 def newtask():
+    is_once_off = True if request.args.get("onceoff") else False
+    print("Once off: ", is_once_off)
+    print("Once off type: ", type(is_once_off))
     if not current_user.activeHouseId:
         return redirect(url_for("house.whathouse"))
     taskForm = NewTaskForm()
@@ -118,13 +119,14 @@ def newtask():
             value=taskForm.value.data,
             coolOffPeriod=taskForm.coolOffPeriod.data,
             coolOffValue=taskForm.coolOffValue.data,
+            isOnceOff=is_once_off if is_once_off else False,
         )
         db.session.add(task)
         db.session.commit()
         flash(f"Task '{taskForm.name.data}' created!", "success")
         return redirect(url_for("tasks.home"))
 
-    return render_template("newtask.html", form=taskForm)
+    return render_template("newtask.html", form=taskForm, once_off=is_once_off)
 
 
 @tasks.route("/tasklog")
@@ -152,6 +154,8 @@ def taskcomplete():
         for taskReq in taskRequests: 
             taskReq.isExpired = True
     taskCompleted = Task.query.filter_by(id=int(request.args["taskid"])).first()
+    if taskCompleted.isOnceOff:
+        taskCompleted.isExpired = True
     # TODO if last completed date is with cool off window, value is cool off value
     taskItem = TaskLog(
         houseId=current_user.activeHouseId,

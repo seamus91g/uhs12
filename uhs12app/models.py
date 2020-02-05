@@ -97,6 +97,8 @@ class Task(db.Model):
     value = Column(Integer, nullable=False)
     coolOffPeriod = Column(Integer, nullable=False, default=0)
     coolOffValue = Column(Integer, nullable=False, default=0)
+    isOnceOff = Column(Boolean, nullable=False, default=False)
+    isExpired = Column(Boolean, nullable=False, default=False)
     dateCreated = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
     lastCompletedDate = Column(DateTime, nullable=True, default=None)
     lastCompletedPersonId = Column(Integer, ForeignKey("user.id"), nullable=True, default=None)
