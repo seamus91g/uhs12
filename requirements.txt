@@ -12,7 +12,7 @@ chardet==3.0.4
 Click==7.0
 colorama==0.4.1
 decorator==4.4.0
-Django==2.1.7
+Django==2.2.10
 Flask==1.0.3
 Flask-Bcrypt==0.7.1
 Flask-Login==0.4.1
